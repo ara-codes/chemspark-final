@@ -1,122 +1,74 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import React, { useEffect, useState } from 'react';
+import { AppProvider, useApp } from './utils/AppContext';
+import Sidebar from './components/Sidebar';
+import { NotificationStack, useNotification } from './components/Notification';
+import Landing from './pages/Landing';
+import Dashboard from './pages/Dashboard';
+import WasteSelection from './pages/WasteSelection';
+import AdsorptionExperiment from './pages/AdsorptionExperiment';
+import AdsorptionAnalysis from './pages/AdsorptionAnalysis';
+import IsothermModelling from './pages/IsothermModelling';
+import AIOptimization from './pages/AIOptimization';
+import Results from './pages/Results';
+import Methodology from './pages/Methodology';
 
-function App() {
-  const [count, setCount] = useState(0)
+function PageRouter() {
+  const { currentPage } = useApp();
+  const { notifications, remove } = useNotification();
+  const [renderedPage, setRenderedPage] = useState(currentPage);
+  const [transitioning, setTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (currentPage === renderedPage) return;
+    setTransitioning(true);
+    const t1 = setTimeout(() => {
+      setRenderedPage(currentPage);
+    }, 100);
+    const t2 = setTimeout(() => {
+      setTransitioning(false);
+    }, 200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [currentPage, renderedPage]);
+
+  const pages = {
+    landing: Landing,
+    dashboard: Dashboard,
+    'waste-selection': WasteSelection,
+    experiment: AdsorptionExperiment,
+    analysis: AdsorptionAnalysis,
+    isotherm: IsothermModelling,
+    optimization: AIOptimization,
+    results: Results,
+    methodology: Methodology,
+  };
+
+  const Page = pages[renderedPage] || Landing;
+  const showSidebar = renderedPage !== 'landing';
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+    <div className="min-h-screen bg-beige">
+      {showSidebar && <Sidebar />}
+      <NotificationStack notifications={notifications} onRemove={remove} />
+      <main className={`${showSidebar ? 'lg:ml-60' : ''} min-h-screen`}>
+        <div
+          className={`transition-all duration-150 ${
+            transitioning ? 'opacity-0 translate-y-2 scale-[0.998]' : 'opacity-100 translate-y-0 scale-100'
+          }`}
         >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+          <Page />
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <AppProvider>
+      <PageRouter />
+    </AppProvider>
+  );
+}
